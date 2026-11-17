@@ -1,106 +1,122 @@
 # AWS Secure Linux Web Server
 
-A hands-on AWS cloud engineering project focused on deploying and monitoring a Linux web server within a custom VPC.
+A hands-on AWS cloud engineering project: build a custom VPC, deploy an Amazon Linux 2023 EC2 instance, host a website with Nginx, and monitor compute health with CloudWatch.
 
-## Project Overview
+**Region:** Europe (London) — `eu-west-2`  
+**Status:** Deployed and reachable over HTTP  
+**Project type:** Learning lab — not production-ready
 
-This project demonstrates the deployment of a Linux-based web server using AWS infrastructure. It covers networking, compute, security, Linux administration, web server configuration and cloud monitoring.
+## Project overview
+
+This project demonstrates practical cloud and Linux administration skills across networking, compute, access control, web hosting and monitoring.
 
 ## Architecture
-[View the AWS infrastructure architecture diagram](architecture/aws-architecture.md)
-**AWS Region:** Europe (London) — `eu-west-2`
 
-The infrastructure includes:
+[Open the architecture diagram](architecture/aws-architecture.md)
 
-- Custom VPC with CIDR `10.0.0.0/16`
-- Two public subnets across two Availability Zones
-- Two private subnets across two Availability Zones
-- Internet Gateway for public subnet connectivity
-- NAT Gateway for private subnet outbound connectivity
-- EC2 instance running Amazon Linux 2023
-- Nginx web server serving a custom webpage
-- CloudWatch CPU monitoring and alarm
+The environment contains:
 
-### Architecture Diagram
+- A custom VPC with CIDR `10.0.0.0/16`.
+- Two public subnets and two private subnets across two Availability Zones.
+- An Internet Gateway for public subnet connectivity.
+- A NAT Gateway providing outbound internet access for the private subnets.
+- An Amazon EC2 `t3.micro` instance running Amazon Linux 2023.
+- Nginx serving a custom static webpage.
+- CloudWatch EC2 CPU metrics and a threshold alarm.
 
-```mermaid
-flowchart TD
-    Internet((Internet))
-    IGW[Internet Gateway]
-    subgraph VPC["VPC: 10.0.0.0/16"]
-        subgraph Public["Public Subnets"]
-            EC2["EC2 Instance<br/>Amazon Linux 2023<br/>Nginx"]
-            NAT["NAT Gateway"]
-        end
-        subgraph Private["Private Subnets"]
-            P1["Private Subnet 1"]
-            P2["Private Subnet 2"]
-        end
-    end
-    Internet <--> IGW
-    IGW --> EC2
-    IGW --> NAT
-    P1 --> NAT
-    P2 --> NAT
-    EC2 --> CW["CloudWatch<br/>CPU Metric and Alarm"]
-```
+### Network layout
 
-## Technologies Used
+| Component | CIDR / placement | Purpose |
+|---|---|---|
+| VPC | `10.0.0.0/16` | Isolated network boundary |
+| Public subnet 1 | `10.0.1.0/24`, `eu-west-2a` | Public-facing resources |
+| Public subnet 2 | `10.0.2.0/24`, `eu-west-2b` | Additional public subnet |
+| Private subnet 1 | `10.0.11.0/24`, `eu-west-2a` | Private workloads |
+| Private subnet 2 | `10.0.12.0/24`, `eu-west-2b` | Private workloads |
+| NAT Gateway | Public subnet 1 | Outbound connectivity for private subnets |
 
-| Technology | Purpose |
+Both public subnets use a route to the Internet Gateway. Both private subnets use a default route through the NAT Gateway.
+
+**Design note:** one zonal NAT Gateway serves both private subnets. This keeps the lab simpler and cheaper than deploying one NAT Gateway per Availability Zone, but introduces an Availability Zone dependency and possible cross-AZ data-transfer charges.
+
+## Technologies
+
+| Technology | How it is used |
 |---|---|
 | AWS VPC | Network isolation |
-| Public and private subnets | Network segmentation |
+| Public/private subnets | Network segmentation |
+| Route tables | Directing network traffic |
 | Internet Gateway | Public internet connectivity |
-| NAT Gateway | Outbound internet access for private subnets |
-| Amazon EC2 | Virtual server hosting |
-| Amazon Linux 2023 | Linux operating system |
-| Nginx | Web server |
-| AWS CloudWatch | Monitoring and alerting |
-| SSH | Secure remote administration |
+| NAT Gateway | Outbound internet for private subnets |
+| Amazon EC2 | Virtual server |
+| Amazon Linux 2023 | Server operating system |
+| Nginx | HTTP web server |
+| Security Groups | Instance-level traffic filtering |
+| SSH | Remote Linux administration |
+| Amazon CloudWatch | CPU monitoring and alarm evaluation |
 
-## Security Configuration
+## Security configuration
 
-- SSH access restricted to a specific administrator IP address.
-- HTTP traffic permitted on port 80 for public website access.
-- EC2 instance deployed in a public subnet.
-- Private subnets use a NAT Gateway for outbound connectivity.
+The EC2 security group has these inbound rules:
 
-## Monitoring
+| Type | Protocol | Port | Source | Reason |
+|---|---|---:|---|---|
+| SSH | TCP | 22 | Administrator public IP (/32) | Restricted remote administration |
+| HTTP | TCP | 80 | `0.0.0.0/0` | Public website access |
 
-Configured an Amazon CloudWatch alarm:
+SSH is not open to the entire internet. The administrator IP must be updated if it changes. HTTP is public, so the site is currently served without TLS/HTTPS.
 
-- **Metric:** EC2 CPUUtilization
+## Linux and web server deployment
+
+The server was accessed using SSH and the EC2 key pair. On Amazon Linux 2023:
+
+1. Updated installed packages with `sudo dnf update -y`.
+2. Installed Nginx with `sudo dnf install nginx -y`.
+3. Enabled and started the service with `sudo systemctl enable --now nginx`.
+4. Verified the service with `sudo systemctl status nginx`.
+5. Published a custom page in `/usr/share/nginx/html/index.html`.
+6. Verified the local HTTP response with `curl -s http://localhost`.
+
+The deployed page is reachable through the EC2 public address over HTTP. Do not publish live IP addresses, account identifiers, private keys or credentials in screenshots or repository files.
+
+## CloudWatch monitoring
+
+CloudWatch was configured to monitor the EC2 `CPUUtilization` metric.
+
 - **Statistic:** Average
 - **Evaluation period:** 5 minutes
-- **Threshold:** Greater than 70%
-- **Alarm name:** `secure-web-server-high-cpu`
+- **Condition:** Greater than 70%
+- **Alarm:** `secure-web-server-high-cpu`
 
-The alarm reached the **OK** state, confirming that the monitored CPU utilisation was below the configured threshold at that time.
+The alarm reached the **OK** state during testing, meaning the evaluated CPU metric was below the configured threshold at that time. No SNS notification or automated recovery action was configured.
 
-No SNS notification or automated recovery action was configured.
+## Validation performed
 
-## Key Learning Outcomes
+- EC2 instance status checks passed (3/3).
+- SSH access to Amazon Linux 2023 succeeded.
+- Nginx service reported `active (running)` and `enabled`.
+- The custom webpage loaded in a browser over HTTP.
+- The CloudWatch CPU metric was visible and the alarm reached OK.
 
-- Designing AWS VPC networking.
-- Configuring public and private subnets.
-- Understanding internet and NAT gateways.
-- Deploying and accessing an EC2 Linux instance.
-- Managing Linux packages and services.
-- Installing and configuring Nginx.
-- Applying security group rules.
-- Monitoring infrastructure using CloudWatch.
+## Repository contents
 
-## Architecture Considerations
+- `architecture/` — infrastructure architecture diagram and notes.
+- `docs/` — implementation and operational notes.
+- `scripts/` — reserved for repeatable setup or administration scripts.
+- `screenshots/` — project evidence, sanitised before publication.
 
-This is a learning project, not a production-ready deployment.
+## Limitations and future improvements
 
-The environment uses one EC2 instance and one NAT Gateway. The NAT Gateway is located in one Availability Zone, so it represents a potential availability dependency. HTTPS, high availability and automated recovery are potential future improvements.
+This is a learning project, not a production deployment.
 
-## Project Evidence
+- A single EC2 instance is a single point of failure; no load balancer or Auto Scaling group is configured.
+- One NAT Gateway serves private subnets in two Availability Zones.
+- The website uses HTTP only; HTTPS/TLS is not configured.
+- The CloudWatch alarm has no SNS email notification or automated remediation.
+- The EC2 instance is deployed in a public subnet for straightforward access in this lab.
 
-Screenshots and supporting documentation will be added to the `screenshots/`, `architecture/` and `docs/` directories.
+Possible next steps include HTTPS with a domain and certificate, SNS notifications, infrastructure as code, private EC2 placement behind a load balancer, and NAT Gateway per Availability Zone where availability requirements justify the cost.
 
 ## Author
 
-Cloud engineering learning project — AWS, Linux and infrastructure fundamentals.
+Cloud engineering learning project focused on AWS, Linux, networking and monitoring.
