@@ -7,7 +7,7 @@ A hands-on AWS cloud engineering project focused on deploying and monitoring a L
 This project demonstrates the deployment of a Linux-based web server using AWS infrastructure. It covers networking, compute, security, Linux administration, web server configuration and cloud monitoring.
 
 ## Architecture
-
+[View the AWS infrastructure architecture diagram](architecture/aws-architecture.md)
 **AWS Region:** Europe (London) — `eu-west-2`
 
 The infrastructure includes:
