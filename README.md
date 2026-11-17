@@ -1,58 +1,106 @@
 # AWS Secure Linux Web Server
 
+A hands-on AWS cloud engineering project focused on deploying and monitoring a Linux web server within a custom VPC.
+
 ## Project Overview
 
-This project demonstrates the deployment and basic security of a Linux web server on Amazon Web Services (AWS).
-
-The project will involve designing a network using Amazon VPC, deploying a Linux EC2 instance, configuring security groups, connecting securely using SSH, installing and configuring Nginx, and implementing basic monitoring.
-
-## Objectives
-
-- Design a basic AWS network using VPC and subnets
-- Deploy a Linux EC2 instance
-- Configure AWS security groups
-- Establish secure SSH access
-- Install and configure Nginx
-- Host a simple web page
-- Implement basic monitoring using Amazon CloudWatch
-- Apply basic cloud security principles
-- Document the deployment and configuration process
-
-## Technologies
-
-- AWS
-- Amazon EC2
-- Amazon VPC
-- Linux
-- Nginx
-- AWS IAM
-- AWS Security Groups
-- Amazon CloudWatch
-- SSH
-- Git
-- GitHub
+This project demonstrates the deployment of a Linux-based web server using AWS infrastructure. It covers networking, compute, security, Linux administration, web server configuration and cloud monitoring.
 
 ## Architecture
 
-Architecture diagram will be added as the project develops.
+**AWS Region:** Europe (London) — `eu-west-2`
 
-## Security Considerations
+The infrastructure includes:
 
-Security decisions and configurations will be documented throughout the project.
+- Custom VPC with CIDR `10.0.0.0/16`
+- Two public subnets across two Availability Zones
+- Two private subnets across two Availability Zones
+- Internet Gateway for public subnet connectivity
+- NAT Gateway for private subnet outbound connectivity
+- EC2 instance running Amazon Linux 2023
+- Nginx web server serving a custom webpage
+- CloudWatch CPU monitoring and alarm
 
-## Deployment
+### Architecture Diagram
 
-Deployment instructions will be added as the infrastructure is created.
+```mermaid
+flowchart TD
+    Internet((Internet))
+    IGW[Internet Gateway]
+    subgraph VPC["VPC: 10.0.0.0/16"]
+        subgraph Public["Public Subnets"]
+            EC2["EC2 Instance<br/>Amazon Linux 2023<br/>Nginx"]
+            NAT["NAT Gateway"]
+        end
+        subgraph Private["Private Subnets"]
+            P1["Private Subnet 1"]
+            P2["Private Subnet 2"]
+        end
+    end
+    Internet <--> IGW
+    IGW --> EC2
+    IGW --> NAT
+    P1 --> NAT
+    P2 --> NAT
+    EC2 --> CW["CloudWatch<br/>CPU Metric and Alarm"]
+```
 
-## Challenges & Troubleshooting
+## Technologies Used
 
-Problems encountered during the project and how they were resolved will be documented here.
+| Technology | Purpose |
+|---|---|
+| AWS VPC | Network isolation |
+| Public and private subnets | Network segmentation |
+| Internet Gateway | Public internet connectivity |
+| NAT Gateway | Outbound internet access for private subnets |
+| Amazon EC2 | Virtual server hosting |
+| Amazon Linux 2023 | Linux operating system |
+| Nginx | Web server |
+| AWS CloudWatch | Monitoring and alerting |
+| SSH | Secure remote administration |
 
-## Future Improvements
+## Security Configuration
 
-- Infrastructure as Code using Terraform
-- Automated deployment using GitHub Actions
-- HTTPS using a custom domain
-- Load balancing
-- Auto Scaling
-- Containerisation using Docker
+- SSH access restricted to a specific administrator IP address.
+- HTTP traffic permitted on port 80 for public website access.
+- EC2 instance deployed in a public subnet.
+- Private subnets use a NAT Gateway for outbound connectivity.
+
+## Monitoring
+
+Configured an Amazon CloudWatch alarm:
+
+- **Metric:** EC2 CPUUtilization
+- **Statistic:** Average
+- **Evaluation period:** 5 minutes
+- **Threshold:** Greater than 70%
+- **Alarm name:** `secure-web-server-high-cpu`
+
+The alarm reached the **OK** state, confirming that the monitored CPU utilisation was below the configured threshold at that time.
+
+No SNS notification or automated recovery action was configured.
+
+## Key Learning Outcomes
+
+- Designing AWS VPC networking.
+- Configuring public and private subnets.
+- Understanding internet and NAT gateways.
+- Deploying and accessing an EC2 Linux instance.
+- Managing Linux packages and services.
+- Installing and configuring Nginx.
+- Applying security group rules.
+- Monitoring infrastructure using CloudWatch.
+
+## Architecture Considerations
+
+This is a learning project, not a production-ready deployment.
+
+The environment uses one EC2 instance and one NAT Gateway. The NAT Gateway is located in one Availability Zone, so it represents a potential availability dependency. HTTPS, high availability and automated recovery are potential future improvements.
+
+## Project Evidence
+
+Screenshots and supporting documentation will be added to the `screenshots/`, `architecture/` and `docs/` directories.
+
+## Author
+
+Cloud engineering learning project — AWS, Linux and infrastructure fundamentals.
