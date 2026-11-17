@@ -1,0 +1,14 @@
+# Private keys and credentials
+*.pem
+*.key
+.env
+.env.*
+
+# Local/editor files
+.DS_Store
+.vscode/
+.idea/
+
+# Logs and temporary files
+*.log
+*.tmp
