@@ -120,3 +120,16 @@ Possible next steps include HTTPS with a domain and certificate, SNS notificatio
 ## Author
 
 Cloud engineering learning project focused on AWS, Linux, networking and monitoring.
+
+
+## Live deployment
+
+The custom Nginx webpage is hosted on an Amazon EC2 instance running Amazon Linux 2023.
+
+**Live website:** http://35.179.146.125
+
+> Note: The website currently uses HTTP. HTTPS/TLS has not been configured.
+
+## Architecture diagram
+
+See the [AWS architecture documentation](architecture/aws-architecture.md) for the infrastructure diagram and configuration details.
